@@ -137,19 +137,36 @@ void loop() {
   int throttlePotMin = POT_RANGE_MIN;
   int throttlePotMax = POT_RANGE_MAX;
 
-  int throttleMinPotRaw = analogRead(THROT_MIN_POT_PIN);
+  int throttleMinPotRaw = constrain(analogRead(THROT_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
   int throttleMinOffset = map(throttleMinPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
-  int throttleMin = throttleRangeMin + throttleMinOffset;
+  int throttleMin = throttleRangeMax - throttleMinOffset;
 
-  int throttleMaxPotRaw = analogRead(THROT_MAX_POT_PIN);
+  int throttleMaxPotRaw = constrain(analogRead(THROT_MAX_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
   int throttleMaxOffset = map(throttleMaxPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
   int throttleMax = throttleRangeMax - throttleMaxOffset;
   
-  int brakeMin = SENSOR_RANGE_MIN;
-  int brakeMax = SENSOR_RANGE_MAX;
+  int brakeRangeMin = SENSOR_RANGE_MIN;
+  int brakeRangeMax = SENSOR_RANGE_MAX;
+  int brakePotMin = POT_RANGE_MIN;
+  int brakePotMax = POT_RANGE_MAX;
 
+  int brakeMinPotRaw = constrain(analogRead(BRAKE_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
+  int brakeMinOffset = map(brakeMinPotRaw, brakePotMin, brakePotMax, brakeRangeMin, brakeRangeMax);
+  int brakeMin = brakeRangeMax - brakeMinOffset;
+
+  int brakeMaxPotRaw = constrain(analogRead(BRAKE_MAX_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
+  int brakeMaxOffset = map(brakeMaxPotRaw, brakePotMin, brakePotMax, brakeRangeMin, brakeRangeMax);
+  int brakeMax = brakeRangeMax - brakeMaxOffset;
   
-  Serial.println(throttleMin);
+  
+  Serial.print(throttleMin);
+  Serial.print(" / ");
+  Serial.print(throttleMax);
+  Serial.print(" / ");
+  Serial.print(brakeMin);
+  Serial.print(" / ");
+  Serial.print(brakeMax);
+  Serial.println("");
 
 
   
