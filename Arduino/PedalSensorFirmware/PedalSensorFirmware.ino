@@ -104,11 +104,39 @@ void clearPixels(int startPixel, int endPixel) {
   }
 }
 
+void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int brakeMin, int brakeMax) {
+  int throtPercent; 
+  int brakePercent; 
+
+  if(throtVal != -1) {
+    throtPercent = 100 - map(throtVal, throtMin, throtMax, 0, 100);  
+  } else {
+    throtPercent = 0;
+  }
+
+
+  if(brakeVal != -1) {
+    brakePercent = 100 - map(brakeVal, brakeMin, brakeMax, 0, 100);
+  } else {
+    brakePercent = 0;
+  }
+  
+
+  Serial.print(throtPercent);
+  Serial.print(" / ");
+  Serial.println(brakePercent);
+  
+}
+
 void loop() {
 
   //TEST POTS
   //Serial.print("Brake Min: ");
   //Serial.println(analogRead(THROT_MIN_POT_PIN));
+  int throttleMin = SENSOR_RANGE_MIN;
+  int throttleMax = SENSOR_RANGE_MAX;
+  int brakeMin = SENSOR_RANGE_MIN;
+  int brakeMax = SENSOR_RANGE_MAX;
   
   //TEST RANGING
   VL53L0X_RangingMeasurementData_t measure;
@@ -130,10 +158,14 @@ void loop() {
     //out of range
   }
 
+/*
   Serial.print("Distances: ");
   Serial.print(throttleDist);
   Serial.print(" / ");
   Serial.println(brakeDist);
+*/
+
+  updatePixels(throttleDist, brakeDist, throttleMin, throttleMax, brakeMin, brakeMax);
   
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < THROTTLE_PIXELS; i++){
