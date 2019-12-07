@@ -29,6 +29,8 @@ Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 #define BRAKE_MIN_POT_PIN 17
 #define BRAKE_MAX_POT_PIN 18
 #define BRIGHTNESS_POT_PIN 19
+#define POT_RANGE_MIN 20
+#define POT_RANGE_MAX 1000
 
 void setup() {
   
@@ -42,13 +44,12 @@ void setup() {
   */
 
   /////// Setup POTS ///////
-  /*
   pinMode(THROT_MIN_POT_PIN, INPUT);
   pinMode(THROT_MAX_POT_PIN, INPUT);
   pinMode(BRAKE_MIN_POT_PIN, INPUT);
   pinMode(BRAKE_MIN_POT_PIN, INPUT);
   pinMode(BRIGHTNESS_POT_PIN, INPUT);
-  */
+
   /////// Setup Pixels /////////
   pinMode(PIXEL_DATA_PIN, OUTPUT);
   
@@ -121,24 +122,38 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
     brakePercent = 0;
   }
   
-
+/*
   Serial.print(throtPercent);
   Serial.print(" / ");
   Serial.println(brakePercent);
-  
+*/  
 }
 
 void loop() {
 
-  //TEST POTS
-  //Serial.print("Brake Min: ");
-  //Serial.println(analogRead(THROT_MIN_POT_PIN));
-  int throttleMin = SENSOR_RANGE_MIN;
-  int throttleMax = SENSOR_RANGE_MAX;
+  //POTS
+  int throttleRangeMin = SENSOR_RANGE_MIN;
+  int throttleRangeMax = SENSOR_RANGE_MAX;
+  int throttlePotMin = POT_RANGE_MIN;
+  int throttlePotMax = POT_RANGE_MAX;
+
+  int throttleMinPotRaw = analogRead(THROT_MIN_POT_PIN);
+  int throttleMinOffset = map(throttleMinPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
+  int throttleMin = throttleRangeMin + throttleMinOffset;
+
+  int throttleMaxPotRaw = analogRead(THROT_MAX_POT_PIN);
+  int throttleMaxOffset = map(throttleMaxPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
+  int throttleMax = throttleRangeMax - throttleMaxOffset;
+  
   int brakeMin = SENSOR_RANGE_MIN;
   int brakeMax = SENSOR_RANGE_MAX;
+
   
-  //TEST RANGING
+  Serial.println(throttleMin);
+
+
+  
+  //RANGE SENSORS
   VL53L0X_RangingMeasurementData_t measure;
 
   int throttleDist = -1;
@@ -165,6 +180,14 @@ void loop() {
   Serial.println(brakeDist);
 */
 
+
+
+
+
+
+
+
+  //PIXELS
   updatePixels(throttleDist, brakeDist, throttleMin, throttleMax, brakeMin, brakeMax);
   
   //TEST FULL PIXELS
