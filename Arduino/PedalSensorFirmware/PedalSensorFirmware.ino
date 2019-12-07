@@ -29,8 +29,8 @@ Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 #define BRAKE_MIN_POT_PIN 17
 #define BRAKE_MAX_POT_PIN 18
 #define BRIGHTNESS_POT_PIN 19
-#define POT_RANGE_MIN 20
-#define POT_RANGE_MAX 1000
+#define POT_RANGE_MIN 0
+#define POT_RANGE_MAX 1024
 
 void setup() {
   
@@ -110,23 +110,28 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   int brakePercent; 
 
   if(throtVal != -1) {
-    throtPercent = 100 - map(throtVal, throtMin, throtMax, 0, 100);  
+    //throtPercent = 100 - map((throtMax - throtVal), throtMin, throtMax, 0, 100);  
+    //throtPercent = 100 - map(throtVal, throtMin, throtMax, 0, 100);  
+    throtPercent = 100 - round(100.0 * ((float)throtVal / (float)(throtMax - throtMin)));
   } else {
     throtPercent = 0;
   }
 
 
   if(brakeVal != -1) {
-    brakePercent = 100 - map(brakeVal, brakeMin, brakeMax, 0, 100);
+    brakePercent = 100 - map(constrain(brakeVal, brakeMin, brakeMax), brakeMin, brakeMax, 0, 100);
   } else {
     brakePercent = 0;
   }
   
-/*
-  Serial.print(throtPercent);
+  Serial.print(throtMin);
   Serial.print(" / ");
-  Serial.println(brakePercent);
-*/  
+  Serial.print(throtMax);
+  Serial.print(" / ");
+  Serial.print(throtVal);
+  Serial.print(" / ");
+  Serial.println(throtPercent);
+
 }
 
 void loop() {
@@ -158,7 +163,7 @@ void loop() {
   int brakeMaxOffset = map(brakeMaxPotRaw, brakePotMin, brakePotMax, brakeRangeMin, brakeRangeMax);
   int brakeMax = brakeRangeMax - brakeMaxOffset;
   
-  
+/*
   Serial.print(throttleMin);
   Serial.print(" / ");
   Serial.print(throttleMax);
@@ -167,7 +172,7 @@ void loop() {
   Serial.print(" / ");
   Serial.print(brakeMax);
   Serial.println("");
-
+*/
 
   
   //RANGE SENSORS
