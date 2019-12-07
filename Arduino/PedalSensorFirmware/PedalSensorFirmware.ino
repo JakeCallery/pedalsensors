@@ -18,6 +18,8 @@ Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
 #define BRAKE_LOX_XSHUT_PIN 5
 #define THROTTLE_LOX_ADDRESS 0x31
 #define BRAKE_LOX_ADDRESS 0x30
+#define SENSOR_RANGE_MIN 20
+#define SENSOR_RANGE_MAX 1200
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
 Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
@@ -105,29 +107,34 @@ void clearPixels(int startPixel, int endPixel) {
 void loop() {
 
   //TEST POTS
-  Serial.print("Brake Min: ");
-  Serial.println(analogRead(THROT_MIN_POT_PIN));
+  //Serial.print("Brake Min: ");
+  //Serial.println(analogRead(THROT_MIN_POT_PIN));
   
   //TEST RANGING
   VL53L0X_RangingMeasurementData_t measure;
+
+  int throttleDist = -1;
+  int brakeDist = -1;
   
   throttleLox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
   if(measure.RangeStatus != 4) {
-    Serial.print("Throttle Range: ");  
-    Serial.println(measure.RangeMilliMeter);
+    throttleDist = constrain(measure.RangeMilliMeter, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX);
   } else {
     //out of range
   }
   
   brakeLox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
   if(measure.RangeStatus != 4) {
-    Serial.print("Brake Range: ");
-    Serial.println(measure.RangeMilliMeter);
+    brakeDist = constrain(measure.RangeMilliMeter, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX);
   } else {
     //out of range
   }
-  
 
+  Serial.print("Distances: ");
+  Serial.print(throttleDist);
+  Serial.print(" / ");
+  Serial.println(brakeDist);
+  
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < THROTTLE_PIXELS; i++){
     neo_pixels.setPixelColor(i, 0, 5, 0);
