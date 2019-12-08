@@ -24,12 +24,12 @@ Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
 Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
 //POTS
-#define THROT_MIN_POT_PIN 15
-#define THROT_MAX_POT_PIN 16
+#define THROT_MIN_POT_PIN 16
+#define THROT_MAX_POT_PIN 15
 #define BRAKE_MIN_POT_PIN 17
 #define BRAKE_MAX_POT_PIN 18
 #define BRIGHTNESS_POT_PIN 19
-#define POT_RANGE_MIN 0
+#define POT_RANGE_MIN 20
 #define POT_RANGE_MAX 1024
 
 void setup() {
@@ -112,7 +112,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   if(throtVal != -1) {
     //throtPercent = 100 - map((throtMax - throtVal), throtMin, throtMax, 0, 100);  
     //throtPercent = 100 - map(throtVal, throtMin, throtMax, 0, 100);  
-    throtPercent = 100 - round(100.0 * ((float)throtVal / (float)(throtMax - throtMin)));
+    throtPercent = 100 - round(100.0 * ((float)throtVal / (float)(throtMax - throtMin)));  //103 / 127 / 99 / -313
   } else {
     throtPercent = 0;
   }
@@ -123,7 +123,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   } else {
     brakePercent = 0;
   }
-  
+/*  
   Serial.print(throtMin);
   Serial.print(" / ");
   Serial.print(throtMax);
@@ -131,7 +131,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   Serial.print(throtVal);
   Serial.print(" / ");
   Serial.println(throtPercent);
-
+*/
 }
 
 void loop() {
@@ -142,13 +142,19 @@ void loop() {
   int throttlePotMin = POT_RANGE_MIN;
   int throttlePotMax = POT_RANGE_MAX;
 
-  int throttleMinPotRaw = constrain(analogRead(THROT_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
-  int throttleMinOffset = map(throttleMinPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
-  int throttleMin = throttleRangeMax - throttleMinOffset;
-
+  //Distance to unpress pedal
   int throttleMaxPotRaw = constrain(analogRead(THROT_MAX_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
   int throttleMaxOffset = map(throttleMaxPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
+  //Serial.print(throttleMaxOffset);
   int throttleMax = throttleRangeMax - throttleMaxOffset;
+
+  //Distance to pressed pedal
+  int throttleMinPotRaw = constrain(analogRead(THROT_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
+  int throttleMinOffset = map(throttleMinPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
+  Serial.print(throttleMinOffset);
+  int throttleMin = throttleRangeMax - throttleMinOffset;
+
+  
   
   int brakeRangeMin = SENSOR_RANGE_MIN;
   int brakeRangeMax = SENSOR_RANGE_MAX;
@@ -184,6 +190,9 @@ void loop() {
   throttleLox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
   if(measure.RangeStatus != 4) {
     throttleDist = constrain(measure.RangeMilliMeter, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX);
+    Serial.print(" / ");
+    Serial.println(throttleDist);
+    throttleDist = map(throttleDist, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX, throttleMin, throttleMax);
   } else {
     //out of range
   }
