@@ -23,17 +23,22 @@ Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
 Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
+//MOMENTARY CALIBRATION SWITCHES
+#define THROT_MIN_PIN 15
+#define THROT_MAX_PIN 16
+#define BRAKE_MIN_PIN 17
+#define BRAKE_MAX_PIN 19
+
 //POTS
-#define THROT_MIN_POT_PIN 16
-#define THROT_MAX_POT_PIN 15
-#define BRAKE_MIN_POT_PIN 17
-#define BRAKE_MAX_POT_PIN 18
 #define BRIGHTNESS_POT_PIN 19
-#define POT_RANGE_MIN 20
-#define POT_RANGE_MAX 1024
+
+int throttleMaxDist = -1;
+int throttleMinDist = -1;
+int brakeMaxDist = -1;
+int brakeMinDist = -1;
 
 void setup() {
-  
+    
   /////// setup serial console ///////
   // wait until serial port opens for native USB devices
   Serial.begin(115200);
@@ -43,11 +48,11 @@ void setup() {
   }
   */
 
-  /////// Setup POTS ///////
-  pinMode(THROT_MIN_POT_PIN, INPUT);
-  pinMode(THROT_MAX_POT_PIN, INPUT);
-  pinMode(BRAKE_MIN_POT_PIN, INPUT);
-  pinMode(BRAKE_MIN_POT_PIN, INPUT);
+  /////// Setup Switches/POTS ///////
+  pinMode(THROT_MIN_PIN, INPUT);
+  pinMode(THROT_MAX_PIN, INPUT);
+  pinMode(BRAKE_MIN_PIN, INPUT);
+  pinMode(BRAKE_MIN_PIN, INPUT);
   pinMode(BRIGHTNESS_POT_PIN, INPUT);
 
   /////// Setup Pixels /////////
@@ -109,117 +114,85 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   int throtPercent; 
   int brakePercent; 
 
-  if(throtVal != -1) {
-    //throtPercent = 100 - map((throtMax - throtVal), throtMin, throtMax, 0, 100);  
-    //throtPercent = 100 - map(throtVal, throtMin, throtMax, 0, 100);  
-    throtPercent = 100 - round(100.0 * ((float)throtVal / (float)(throtMax - throtMin)));  //103 / 127 / 99 / -313
+  if(throtVal != -1 && throtMin != -1 && throtMax != -1) {
+    throtPercent = 100 - map(constrain(throtVal,throtMin,throtMax), throtMin, throtMax, 0, 100);  
   } else {
     throtPercent = 0;
   }
 
 
-  if(brakeVal != -1) {
+  if(brakeVal != -1 && brakeMin != -1 && throtMax != -1) {
     brakePercent = 100 - map(constrain(brakeVal, brakeMin, brakeMax), brakeMin, brakeMax, 0, 100);
   } else {
     brakePercent = 0;
   }
-/*  
-  Serial.print(throtMin);
+
+  Serial.print(brakeMin);
   Serial.print(" / ");
-  Serial.print(throtMax);
+  Serial.print(brakeMax);
   Serial.print(" / ");
-  Serial.print(throtVal);
+  Serial.print(brakeVal);
   Serial.print(" / ");
-  Serial.println(throtPercent);
-*/
+  Serial.println(brakePercent);
+
 }
 
 void loop() {
 
-  //POTS
-  int throttleRangeMin = SENSOR_RANGE_MIN;
-  int throttleRangeMax = SENSOR_RANGE_MAX;
-  int throttlePotMin = POT_RANGE_MIN;
-  int throttlePotMax = POT_RANGE_MAX;
-
-  //Distance to unpress pedal
-  int throttleMaxPotRaw = constrain(analogRead(THROT_MAX_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
-  int throttleMaxOffset = map(throttleMaxPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
-  //Serial.print(throttleMaxOffset);
-  int throttleMax = throttleRangeMax - throttleMaxOffset;
-
-  //Distance to pressed pedal
-  int throttleMinPotRaw = constrain(analogRead(THROT_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
-  int throttleMinOffset = map(throttleMinPotRaw, throttlePotMin, throttlePotMax, throttleRangeMin, throttleRangeMax);
-  Serial.print(throttleMinOffset);
-  int throttleMin = throttleRangeMax - throttleMinOffset;
-
-  
-  
-  int brakeRangeMin = SENSOR_RANGE_MIN;
-  int brakeRangeMax = SENSOR_RANGE_MAX;
-  int brakePotMin = POT_RANGE_MIN;
-  int brakePotMax = POT_RANGE_MAX;
-
-  int brakeMinPotRaw = constrain(analogRead(BRAKE_MIN_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
-  int brakeMinOffset = map(brakeMinPotRaw, brakePotMin, brakePotMax, brakeRangeMin, brakeRangeMax);
-  int brakeMin = brakeRangeMax - brakeMinOffset;
-
-  int brakeMaxPotRaw = constrain(analogRead(BRAKE_MAX_POT_PIN), POT_RANGE_MIN, POT_RANGE_MAX);
-  int brakeMaxOffset = map(brakeMaxPotRaw, brakePotMin, brakePotMax, brakeRangeMin, brakeRangeMax);
-  int brakeMax = brakeRangeMax - brakeMaxOffset;
-  
-/*
-  Serial.print(throttleMin);
-  Serial.print(" / ");
-  Serial.print(throttleMax);
-  Serial.print(" / ");
-  Serial.print(brakeMin);
-  Serial.print(" / ");
-  Serial.print(brakeMax);
-  Serial.println("");
-*/
-
-  
   //RANGE SENSORS
-  VL53L0X_RangingMeasurementData_t measure;
-
+  VL53L0X_RangingMeasurementData_t throttleMeasure;
+  VL53L0X_RangingMeasurementData_t brakeMeasure;
+ 
   int throttleDist = -1;
   int brakeDist = -1;
   
-  throttleLox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-  if(measure.RangeStatus != 4) {
-    throttleDist = constrain(measure.RangeMilliMeter, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX);
-    Serial.print(" / ");
-    Serial.println(throttleDist);
-    throttleDist = map(throttleDist, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX, throttleMin, throttleMax);
+  throttleLox.rangingTest(&throttleMeasure, false); // pass in 'true' to get debug data printout!
+  if(throttleMeasure.RangeStatus != 4) {
+    throttleDist = throttleMeasure.RangeMilliMeter;
+    if(throttleMaxDist == -1 || digitalRead(THROT_MAX_PIN)== HIGH){
+      //Set Max distance
+      Serial.print("Setting Throttle Max Dist: ");
+      throttleMaxDist = throttleDist;
+      Serial.println(throttleMaxDist);
+    }
+
+    if(throttleMinDist == -1 || digitalRead(THROT_MIN_PIN) == HIGH) {
+      //Set Min Distance
+      Serial.print("Setting Throttle Min Dist: ");
+      throttleMinDist = throttleDist;
+      Serial.println(throttleMinDist);
+    }
+   
   } else {
     //out of range
   }
   
-  brakeLox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
-  if(measure.RangeStatus != 4) {
-    brakeDist = constrain(measure.RangeMilliMeter, SENSOR_RANGE_MIN, SENSOR_RANGE_MAX);
+  brakeLox.rangingTest(&brakeMeasure, false); // pass in 'true' to get debug data printout!
+  if(brakeMeasure.RangeStatus != 4) {
+    brakeDist = brakeMeasure.RangeMilliMeter;
+    Serial.println(digitalRead(BRAKE_MAX_PIN));
+    Serial.println(brakeMaxDist);
+    if(brakeMaxDist == -1 || digitalRead(BRAKE_MAX_PIN) == HIGH){
+    //Set Max distance
+    Serial.print("Setting Brake Max Dist: ");
+    brakeMaxDist = brakeDist;
+    Serial.println(brakeMaxDist);
+  }
+
+  if(brakeMinDist == -1 || digitalRead(BRAKE_MIN_PIN) == HIGH) {
+    //Set Min Distance
+    Serial.print("Setting Brake Min Dist: ");
+    brakeMinDist = brakeDist;
+    Serial.println(brakeMinDist);
+  }
+
   } else {
     //out of range
   }
 
-/*
-  Serial.print("Distances: ");
-  Serial.print(throttleDist);
-  Serial.print(" / ");
-  Serial.println(brakeDist);
-*/
-
-
-
-
-
-
-
-
+  
   //PIXELS
-  updatePixels(throttleDist, brakeDist, throttleMin, throttleMax, brakeMin, brakeMax);
+  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist);
   
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < THROTTLE_PIXELS; i++){
