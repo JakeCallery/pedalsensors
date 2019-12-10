@@ -5,7 +5,7 @@
 #define PIXEL_DATA_PIN        13
 #define NUM_BRAKE_PIXELS      8
 #define BRAKE_PIXEL_START     15
-#define BRAKE_PIXEL_END       (BRAKE_PIXEL_START - NUM_BRAKE_PIXELS) + 1
+#define BRAKE_PIXEL_END       (BRAKE_PIXEL_START - NUM_BRAKE_PIXELS)
 #define NUM_THROTTLE_PIXELS   8
 #define THROTTLE_PIXEL_START  0
 #define THROTTLE_PIXEL_END    THROTTLE_PIXEL_START + (NUM_THROTTLE_PIXELS - 1)
@@ -130,15 +130,44 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
   int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
-  int partialThrottleLight = round(((throtPercent % round(wholeThrottleLight)) / 10) * maxBrightness);
+  int partialThrottleLightVal = round(((throtPercent % round(wholeThrottleLight)) / 10) * maxBrightness);
 
   float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
   int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
-  int partialBrakeLight = round(((brakePercent % round(wholeBrakeLight)) / 10) * maxBrightness);
+  int partialBrakeLightVal = round(((brakePercent % round(wholeBrakeLight)) / 10) * maxBrightness);
+
+
+  clearPixels(0, PIXEL_COUNT);
+  int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
+  for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END; i += throttleLightDirection, lightCount++) {
+      //Light up full lights
+      neo_pixels.setPixelColor(i, 0, maxBrightness, 0);
+      if(lightCount >= numFullThrottleLights) break;
+  }
+
+  //Set partial throttle light
+  if(partialThrottleLightVal > 0 && numFullThrottleLights <= NUM_THROTTLE_PIXELS) {
+    neo_pixels.setPixelColor(numFullThrottleLights, 0, partialThrottleLightVal, 0);
+  }
+  
+
+  int brakeLightDirection = (BRAKE_PIXEL_START <= BRAKE_PIXEL_END) ? 1:-1;
+  for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END; i += brakeLightDirection, lightCount++) {
+      //Light up full lights
+      neo_pixels.setPixelColor(i, maxBrightness, 0, 0);
+      if(lightCount >= numFullBrakeLights) break;
+  }
+
+//Set partial brake light
+  if(partialBrakeLightVal > 0 && numFullBrakeLights <= NUM_BRAKE_PIXELS) {
+    neo_pixels.setPixelColor(numFullBrakeLights, 0, partialBrakeLightVal, 0);
+  }
+
+
 
   Serial.print(numFullThrottleLights);
   Serial.print(" / ");
-  Serial.print(partialThrottleLight);
+  Serial.print(partialThrottleLightVal);
 
 
 
