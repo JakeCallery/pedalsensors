@@ -1,25 +1,26 @@
 #include "Adafruit_NeoPixel.h"
 #include "Adafruit_VL53L0X.h"
 
-
 //PIXELS
-#define PIXEL_DATA_PIN    13
-#define PIXEL_COUNT       16
-#define BRAKE_PIXELS      8
-#define BRAKE_PIXEL_START 15
-#define BRAKE_PIXEL_END   (BRAKE_PIXEL_START - BRAKE_PIXELS) + 1
-#define THROTTLE_PIXELS   8
-#define THROTTLE_PIXEL_START 0
-#define THROTTLE_PIXEL_END THROTTLE_PIXEL_START + (THROTTLE_PIXELS - 1)
+#define PIXEL_DATA_PIN        13
+#define NUM_BRAKE_PIXELS      8
+#define BRAKE_PIXEL_START     15
+#define BRAKE_PIXEL_END       (BRAKE_PIXEL_START - NUM_BRAKE_PIXELS) + 1
+#define NUM_THROTTLE_PIXELS   8
+#define THROTTLE_PIXEL_START  0
+#define THROTTLE_PIXEL_END    THROTTLE_PIXEL_START + (NUM_THROTTLE_PIXELS - 1)
+#define PIXEL_COUNT           (NUM_BRAKE_PIXELS + NUM_THROTTLE_PIXELS)
+
 Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
 
 //DISTANCE_SENSORS
-#define THROTTLE_LOX_XSHUT_PIN 6
-#define BRAKE_LOX_XSHUT_PIN 5
-#define THROTTLE_LOX_ADDRESS 0x31
-#define BRAKE_LOX_ADDRESS 0x30
-#define SENSOR_RANGE_MIN 20
-#define SENSOR_RANGE_MAX 1200
+#define THROTTLE_LOX_XSHUT_PIN  6
+#define BRAKE_LOX_XSHUT_PIN     5
+#define THROTTLE_LOX_ADDRESS    0x31
+#define BRAKE_LOX_ADDRESS       0x30
+#define SENSOR_RANGE_MIN        20
+#define SENSOR_RANGE_MAX        1200
+
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
 Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
@@ -110,7 +111,7 @@ void clearPixels(int startPixel, int endPixel) {
   }
 }
 
-void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int brakeMin, int brakeMax) {
+void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int brakeMin, int brakeMax, int maxBrightness) {
   int throtPercent; 
   int brakePercent; 
 
@@ -127,6 +128,19 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
     brakePercent = 0;
   }
 
+  float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
+  int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
+  int partialThrottleLight = round((((float)throtPercent % wholeThrottleLight) / 10) * maxBrightness);
+
+  float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
+  int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
+  int partialBrakeLight = round((((float)brakePercent % wholeBrakeLight) / 10) * maxBrightness);
+
+  Serial.print(numFullThrottleLights);
+  Serial.printt(" / ");
+  Serial.print(partialThrottleLight);
+
+/*
   Serial.print(brakeMin);
   Serial.print(" / ");
   Serial.print(brakeMax);
@@ -134,6 +148,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   Serial.print(brakeVal);
   Serial.print(" / ");
   Serial.println(brakePercent);
+*/
 
 }
 
@@ -195,7 +210,7 @@ void loop() {
   updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist);
   
   //TEST FULL PIXELS
-  for(int i = THROTTLE_PIXEL_START; i < THROTTLE_PIXELS; i++){
+  for(int i = THROTTLE_PIXEL_START; i < NUM_THROTTLE_PIXELS; i++){
     neo_pixels.setPixelColor(i, 0, 5, 0);
   }
 
