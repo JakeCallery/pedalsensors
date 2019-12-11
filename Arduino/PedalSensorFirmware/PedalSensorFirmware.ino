@@ -130,19 +130,18 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
   int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
-  int partialThrottleLightVal = round(((throtPercent % round(wholeThrottleLight)) / 10) * maxBrightness);
+  int partialThrottleLightVal = round(((throtPercent % (int)floor(wholeThrottleLight)) / 10) * maxBrightness);
 
   float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
   int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
-  int partialBrakeLightVal = round(((brakePercent % round(wholeBrakeLight)) / 10) * maxBrightness);
+  int partialBrakeLightVal = round((brakePercent % round(wholeBrakeLight) / 100) * maxBrightness);
 
 
   clearPixels(0, PIXEL_COUNT);
   int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
-  for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END; i += throttleLightDirection, lightCount++) {
+  for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END, lightCount < numFullThrottleLights; i += throttleLightDirection, lightCount++) {
       //Light up full lights
       neo_pixels.setPixelColor(i, 0, maxBrightness, 0);
-      if(lightCount >= numFullThrottleLights) break;
   }
 
   //Set partial throttle light
@@ -150,26 +149,34 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
     neo_pixels.setPixelColor(numFullThrottleLights, 0, partialThrottleLightVal, 0);
   }
   
-
+/*
   int brakeLightDirection = (BRAKE_PIXEL_START <= BRAKE_PIXEL_END) ? 1:-1;
   for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END; i += brakeLightDirection, lightCount++) {
       //Light up full lights
       neo_pixels.setPixelColor(i, maxBrightness, 0, 0);
-      if(lightCount >= numFullBrakeLights) break;
+      if(lightCount >= numFullBrakeLights){
+        break;
+      } 
   }
 
 //Set partial brake light
   if(partialBrakeLightVal > 0 && numFullBrakeLights <= NUM_BRAKE_PIXELS) {
     neo_pixels.setPixelColor(numFullBrakeLights, 0, partialBrakeLightVal, 0);
   }
+*/
 
-
-
+/*  
+  Serial.print(throtPercent);
+  Serial.print(" / ");
+  Serial.print(throtVal);
+  Serial.print(" / ");
+  Serial.print(brakeVal);
+  Serial.print(" / ");
   Serial.print(numFullThrottleLights);
   Serial.print(" / ");
   Serial.print(partialThrottleLightVal);
-
-
+  Serial.println("");
+*/
 
 /*
   Serial.print(brakeMin);
@@ -216,8 +223,8 @@ void loop() {
   brakeLox.rangingTest(&brakeMeasure, false); // pass in 'true' to get debug data printout!
   if(brakeMeasure.RangeStatus != 4) {
     brakeDist = brakeMeasure.RangeMilliMeter;
-    Serial.println(digitalRead(BRAKE_MAX_PIN));
-    Serial.println(brakeMaxDist);
+    //Serial.println(digitalRead(BRAKE_MAX_PIN));
+    //Serial.println(brakeMaxDist);
     if(brakeMaxDist == -1 || digitalRead(BRAKE_MAX_PIN) == HIGH){
     //Set Max distance
     Serial.print("Setting Brake Max Dist: ");
@@ -239,7 +246,7 @@ void loop() {
   
   //PIXELS
   updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 25);
-  
+/*  
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < NUM_THROTTLE_PIXELS; i++){
     neo_pixels.setPixelColor(i, 0, 5, 0);
@@ -250,6 +257,7 @@ void loop() {
   }
 
   //clearPixels(0,PIXEL_COUNT);
+*/
   neo_pixels.show();
-  delay(100);
+  delay(16);
 }
