@@ -5,7 +5,7 @@
 #define PIXEL_DATA_PIN        13
 #define NUM_BRAKE_PIXELS      8
 #define BRAKE_PIXEL_START     15
-#define BRAKE_PIXEL_END       (BRAKE_PIXEL_START - NUM_BRAKE_PIXELS)
+#define BRAKE_PIXEL_END       (BRAKE_PIXEL_START - NUM_BRAKE_PIXELS) - 1
 #define NUM_THROTTLE_PIXELS   8
 #define THROTTLE_PIXEL_START  0
 #define THROTTLE_PIXEL_END    THROTTLE_PIXEL_START + (NUM_THROTTLE_PIXELS - 1)
@@ -115,6 +115,8 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   int throtPercent; 
   int brakePercent; 
 
+  clearPixels(0, PIXEL_COUNT);
+
   if(throtVal != -1 && throtMin != -1 && throtMax != -1) {
     throtPercent = 100 - map(constrain(throtVal,throtMin,throtMax), throtMin, throtMax, 0, 100);  
   } else {
@@ -128,26 +130,11 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
     brakePercent = 0;
   }
 
+  //THROTTLE
   float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
   int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
   double decimal = ((double)throtPercent / wholeThrottleLight) - (double)floor((float)throtPercent / wholeThrottleLight);
   int partialThrottleLightVal = round(decimal * maxBrightness);
-  //int partialThrottleLightVal = round(((float)(throtPercent % (int)floor(wholeThrottleLight)) / 10.0) * maxBrightness);
-
-  // Serial.print(throtPercent);
-  // Serial.print(" / ");
-  // Serial.print(decimal);
-  // Serial.print(" / ");
-  // Serial.print(partialThrottleLightVal);
-  // Serial.println("");
-  Serial.println(numFullThrottleLights);
-  /*
-  float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
-  int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
-  int partialBrakeLightVal = round((brakePercent % round(wholeBrakeLight) / 100) * maxBrightness);
-  */
-
-  clearPixels(0, PIXEL_COUNT);
   int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
   for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END, lightCount < numFullThrottleLights; i += throttleLightDirection, lightCount++) {
       //Light up full lights
@@ -156,47 +143,23 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   //Set partial throttle light
   if(partialThrottleLightVal > 0 && numFullThrottleLights < NUM_THROTTLE_PIXELS) {
-    neo_pixels.setPixelColor(numFullThrottleLights, 0, partialThrottleLightVal, 0);
+    neo_pixels.setPixelColor(THROTTLE_PIXEL_START + numFullThrottleLights, 0, partialThrottleLightVal, 0);
   }
   
-/*
+  double wholeBrakeLight = (double)100 / (double)NUM_BRAKE_PIXELS;
+  int numFullBrakeLights = floor((double)brakePercent / (double)wholeBrakeLight);
+  decimal = ((double)brakePercent / wholeBrakeLight) - (double)floor((double)brakePercent / (double)wholeBrakeLight);
+  int partialBrakeLightVal = round(decimal * maxBrightness);
   int brakeLightDirection = (BRAKE_PIXEL_START <= BRAKE_PIXEL_END) ? 1:-1;
-  for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END; i += brakeLightDirection, lightCount++) {
+  for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END, lightCount < numFullBrakeLights; i += brakeLightDirection, lightCount++) {
       //Light up full lights
       neo_pixels.setPixelColor(i, maxBrightness, 0, 0);
-      if(lightCount >= numFullBrakeLights){
-        break;
-      } 
   }
 
-//Set partial brake light
-  if(partialBrakeLightVal > 0 && numFullBrakeLights <= NUM_BRAKE_PIXELS) {
-    neo_pixels.setPixelColor(numFullBrakeLights, 0, partialBrakeLightVal, 0);
+  //Set partial brake light
+  if(partialBrakeLightVal > 0 && numFullBrakeLights < NUM_BRAKE_PIXELS) {
+    neo_pixels.setPixelColor(BRAKE_PIXEL_START + numFullBrakeLights, partialBrakeLightVal, 0, 0);
   }
-*/
-
-/*  
-  Serial.print(throtPercent);
-  Serial.print(" / ");
-  Serial.print(throtVal);
-  Serial.print(" / ");
-  Serial.print(brakeVal);
-  Serial.print(" / ");
-  Serial.print(numFullThrottleLights);
-  Serial.print(" / ");
-  Serial.print(partialThrottleLightVal);
-  Serial.println("");
-*/
-
-/*
-  Serial.print(brakeMin);
-  Serial.print(" / ");
-  Serial.print(brakeMax);
-  Serial.print(" / ");
-  Serial.print(brakeVal);
-  Serial.print(" / ");
-  Serial.println(brakePercent);
-*/
 
 }
 
