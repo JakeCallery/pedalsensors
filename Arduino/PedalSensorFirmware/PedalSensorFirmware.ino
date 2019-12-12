@@ -130,12 +130,20 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
   int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
-  int partialThrottleLightVal = round(((throtPercent % (int)floor(wholeThrottleLight)) / 10) * maxBrightness);
+  int partialThrottleLightVal = round(((float)(throtPercent % (int)floor(wholeThrottleLight)) / 10.0) * maxBrightness);
 
+  // Serial.print(round(((throtPercent % (int)floor(wholeThrottleLight)))));
+  // Serial.print(" / ");
+  // Serial.print((float)round(((throtPercent % (int)floor(wholeThrottleLight)))) / 10.0);
+  // Serial.print(" / ");
+  // Serial.print(partialThrottleLightVal);
+  // Serial.println("");
+
+  /*
   float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
   int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
   int partialBrakeLightVal = round((brakePercent % round(wholeBrakeLight) / 100) * maxBrightness);
-
+  */
 
   clearPixels(0, PIXEL_COUNT);
   int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
@@ -245,7 +253,7 @@ void loop() {
 
   
   //PIXELS
-  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 25);
+  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 50);
 /*  
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < NUM_THROTTLE_PIXELS; i++){
