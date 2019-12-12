@@ -25,13 +25,13 @@ Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
 Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
 //MOMENTARY CALIBRATION SWITCHES
-#define THROT_MIN_PIN 15
-#define THROT_MAX_PIN 16
+#define THROT_MIN_PIN 14
+#define THROT_MAX_PIN 15
 #define BRAKE_MIN_PIN 17
 #define BRAKE_MAX_PIN 19
 
 //POTS
-#define BRIGHTNESS_POT_PIN 19
+#define BRIGHTNESS_POT_PIN 16
 
 int throttleMaxDist = -1;
 int throttleMinDist = -1;
@@ -216,21 +216,15 @@ void loop() {
     //out of range
   }
 
-  
+  //BRIGHTNESS
+  int maxBrightness = analogRead(BRIGHTNESS_POT_PIN);
+  // Serial.print(maxBrightness);
+  // Serial.print(" / ");
+  maxBrightness = map(maxBrightness, 0, 1024, 0, 255);
+  // Serial.print(maxBrightness);
+  // Serial.println("");
   //PIXELS
-  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 30);
-/*  
-  //TEST FULL PIXELS
-  for(int i = THROTTLE_PIXEL_START; i < NUM_THROTTLE_PIXELS; i++){
-    neo_pixels.setPixelColor(i, 0, 5, 0);
-  }
-
-  for(int i = BRAKE_PIXEL_START; i >= BRAKE_PIXEL_END; i--){
-    neo_pixels.setPixelColor(i, 5, 0, 0);
-  }
-
-  //clearPixels(0,PIXEL_COUNT);
-*/
+  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, maxBrightness);
   neo_pixels.show();
   delay(16);
 }
