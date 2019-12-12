@@ -42,7 +42,7 @@ void setup() {
     
   /////// setup serial console ///////
   // wait until serial port opens for native USB devices
-  Serial.begin(115200);
+  Serial.begin(9600);
   /*
   while (! Serial) {
     delay(1);
@@ -130,15 +130,17 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   float wholeThrottleLight = 100 / NUM_THROTTLE_PIXELS;
   int numFullThrottleLights = floor((float)throtPercent / wholeThrottleLight);
-  int partialThrottleLightVal = round(((float)(throtPercent % (int)floor(wholeThrottleLight)) / 10.0) * maxBrightness);
+  double decimal = ((double)throtPercent / wholeThrottleLight) - (double)floor((float)throtPercent / wholeThrottleLight);
+  int partialThrottleLightVal = round(decimal * maxBrightness);
+  //int partialThrottleLightVal = round(((float)(throtPercent % (int)floor(wholeThrottleLight)) / 10.0) * maxBrightness);
 
-  // Serial.print(round(((throtPercent % (int)floor(wholeThrottleLight)))));
+  // Serial.print(throtPercent);
   // Serial.print(" / ");
-  // Serial.print((float)round(((throtPercent % (int)floor(wholeThrottleLight)))) / 10.0);
+  // Serial.print(decimal);
   // Serial.print(" / ");
   // Serial.print(partialThrottleLightVal);
   // Serial.println("");
-
+  Serial.println(numFullThrottleLights);
   /*
   float wholeBrakeLight = 100 / NUM_BRAKE_PIXELS;
   int numFullBrakeLights = floor((float)brakePercent / wholeBrakeLight);
@@ -153,7 +155,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
   }
 
   //Set partial throttle light
-  if(partialThrottleLightVal > 0 && numFullThrottleLights <= NUM_THROTTLE_PIXELS) {
+  if(partialThrottleLightVal > 0 && numFullThrottleLights < NUM_THROTTLE_PIXELS) {
     neo_pixels.setPixelColor(numFullThrottleLights, 0, partialThrottleLightVal, 0);
   }
   
@@ -253,7 +255,7 @@ void loop() {
 
   
   //PIXELS
-  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 50);
+  updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, 30);
 /*  
   //TEST FULL PIXELS
   for(int i = THROTTLE_PIXEL_START; i < NUM_THROTTLE_PIXELS; i++){
