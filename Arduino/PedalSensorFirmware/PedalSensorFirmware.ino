@@ -143,7 +143,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   //Set partial throttle light
   if(partialThrottleLightVal > 0 && numFullThrottleLights < NUM_THROTTLE_PIXELS) {
-    neo_pixels.setPixelColor(THROTTLE_PIXEL_START + numFullThrottleLights, 0, partialThrottleLightVal, 0);
+    neo_pixels.setPixelColor(THROTTLE_PIXEL_START + (numFullThrottleLights * throttleLightDirection), 0, partialThrottleLightVal, 0);
   }
   
   double wholeBrakeLight = (double)100 / (double)NUM_BRAKE_PIXELS;
@@ -158,7 +158,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 
   //Set partial brake light
   if(partialBrakeLightVal > 0 && numFullBrakeLights < NUM_BRAKE_PIXELS) {
-    neo_pixels.setPixelColor(BRAKE_PIXEL_START + numFullBrakeLights, partialBrakeLightVal, 0, 0);
+    neo_pixels.setPixelColor(BRAKE_PIXEL_START + (numFullBrakeLights * brakeLightDirection), partialBrakeLightVal, 0, 0);
   }
 
 }
