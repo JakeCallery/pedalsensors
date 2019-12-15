@@ -1,5 +1,6 @@
 #include "Adafruit_NeoPixel.h"
 #include "Adafruit_VL53L0X.h"
+#include <FlashStorage.h>
 
 //PIXELS
 #define PIXEL_DATA_PIN        13
@@ -11,8 +12,6 @@
 #define THROTTLE_PIXEL_END    THROTTLE_PIXEL_START + (NUM_THROTTLE_PIXELS - 1)
 #define PIXEL_COUNT           (NUM_BRAKE_PIXELS + NUM_THROTTLE_PIXELS)
 
-Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
-
 //DISTANCE_SENSORS
 #define THROTTLE_LOX_XSHUT_PIN  6
 #define BRAKE_LOX_XSHUT_PIN     5
@@ -20,9 +19,6 @@ Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
 #define BRAKE_LOX_ADDRESS       0x30
 #define SENSOR_RANGE_MIN        20
 #define SENSOR_RANGE_MAX        1200
-
-Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
-Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 
 //MOMENTARY CALIBRATION SWITCHES
 #define THROT_MIN_PIN 14
@@ -33,21 +29,37 @@ Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
 //POTS
 #define BRIGHTNESS_POT_PIN 16
 
+
+//GLOBALS
+Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
+Adafruit_VL53L0X brakeLox = Adafruit_VL53L0X();
+Adafruit_NeoPixel neo_pixels(PIXEL_COUNT, PIXEL_DATA_PIN, NEO_GRB + NEO_KHZ800);
+
 int throttleMaxDist = -1;
 int throttleMinDist = -1;
 int brakeMaxDist = -1;
 int brakeMinDist = -1;
 
+typedef struct {
+  boolean valid;
+  int throtMin;
+  int throtMax;
+  int brakeMin;
+  int brakeMax;
+} Settings;
+
+FlashStorage(settings_flash_store, Settings);
+
 void setup() {
     
   /////// setup serial console ///////
+  Serial.begin(115200);
+  
   // wait until serial port opens for native USB devices
-  Serial.begin(9600);
-  /*
-  while (! Serial) {
+  while (!Serial) {
     delay(1);
   }
-  */
+  
 
   /////// Setup Switches/POTS ///////
   pinMode(THROT_MIN_PIN, INPUT);
@@ -94,7 +106,30 @@ void setup() {
     //TODO: Some failure indicator to the user
     while(1);
   }
-  
+
+  //////// GET FLASH MEM VALUES ///////////
+  Settings settings;
+  settings = settings_flash_store.read();
+
+  if(settings.valid == false) {
+      Serial.println("Flash data not valid, setting default data");
+      settings.throtMin = -1;
+      settings.throtMax = -1;
+      settings.brakeMin = -1;
+      settings.brakeMax = -1;
+      settings.valid = true;
+      settings_flash_store.write(settings);
+  } else {
+      Serial.println("Found valid flash data:");
+      throttleMinDist = settings.throtMin;
+      throttleMaxDist = settings.throtMax;
+      brakeMinDist = settings.brakeMin;
+      brakeMaxDist = settings.brakeMax;
+      Serial.print("Throttle Min: "); Serial.println(throttleMinDist);
+      Serial.print("Throttle Max: "); Serial.println(throttleMaxDist);
+      Serial.print("Brake Min: "); Serial.println(brakeMinDist);
+      Serial.print("Brake Max: "); Serial.println(brakeMaxDist);
+  }
 }
 
 void clearPixels(int startPixel, int endPixel) {
