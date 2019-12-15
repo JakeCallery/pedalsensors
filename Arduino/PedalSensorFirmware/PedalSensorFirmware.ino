@@ -29,6 +29,8 @@
 //POTS
 #define BRIGHTNESS_POT_PIN 16
 
+//OTHER
+#define SAVE_TO_FLASH true
 
 //GLOBALS
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
@@ -56,16 +58,17 @@ void setup() {
   Serial.begin(115200);
   
   // wait until serial port opens for native USB devices
+  /*
   while (!Serial) {
     delay(1);
   }
-  
+  */
 
   /////// Setup Switches/POTS ///////
   pinMode(THROT_MIN_PIN, INPUT);
   pinMode(THROT_MAX_PIN, INPUT);
   pinMode(BRAKE_MIN_PIN, INPUT);
-  pinMode(BRAKE_MIN_PIN, INPUT);
+  pinMode(BRAKE_MAX_PIN, INPUT);
   pinMode(BRIGHTNESS_POT_PIN, INPUT);
 
   /////// Setup Pixels /////////
@@ -112,13 +115,15 @@ void setup() {
   settings = settings_flash_store.read();
 
   if(settings.valid == false) {
-      Serial.println("Flash data not valid, setting default data");
-      settings.throtMin = -1;
-      settings.throtMax = -1;
-      settings.brakeMin = -1;
-      settings.brakeMax = -1;
-      settings.valid = true;
-      settings_flash_store.write(settings);
+      if(SAVE_TO_FLASH) {
+        Serial.println("Flash data not valid, setting default data");
+        settings.throtMin = -1;
+        settings.throtMax = -1;
+        settings.brakeMin = -1;
+        settings.brakeMax = -1;
+        settings.valid = true;
+        settings_flash_store.write(settings);
+      }
   } else {
       Serial.println("Found valid flash data:");
       throttleMinDist = settings.throtMin;
@@ -207,6 +212,8 @@ void loop() {
   int throttleDist = -1;
   int brakeDist = -1;
   
+  boolean needToWriteSettings = false;
+
   throttleLox.rangingTest(&throttleMeasure, false); // pass in 'true' to get debug data printout!
   if(throttleMeasure.RangeStatus != 4) {
     throttleDist = throttleMeasure.RangeMilliMeter;
@@ -215,6 +222,7 @@ void loop() {
       Serial.print("Setting Throttle Max Dist: ");
       throttleMaxDist = throttleDist;
       Serial.println(throttleMaxDist);
+      needToWriteSettings = true;
     }
 
     if(throttleMinDist == -1 || digitalRead(THROT_MIN_PIN) == HIGH) {
@@ -222,6 +230,7 @@ void loop() {
       Serial.print("Setting Throttle Min Dist: ");
       throttleMinDist = throttleDist;
       Serial.println(throttleMinDist);
+      needToWriteSettings = true;
     }
    
   } else {
@@ -231,33 +240,42 @@ void loop() {
   brakeLox.rangingTest(&brakeMeasure, false); // pass in 'true' to get debug data printout!
   if(brakeMeasure.RangeStatus != 4) {
     brakeDist = brakeMeasure.RangeMilliMeter;
-    //Serial.println(digitalRead(BRAKE_MAX_PIN));
-    //Serial.println(brakeMaxDist);
     if(brakeMaxDist == -1 || digitalRead(BRAKE_MAX_PIN) == HIGH){
-    //Set Max distance
-    Serial.print("Setting Brake Max Dist: ");
-    brakeMaxDist = brakeDist;
-    Serial.println(brakeMaxDist);
-  }
-
-  if(brakeMinDist == -1 || digitalRead(BRAKE_MIN_PIN) == HIGH) {
-    //Set Min Distance
-    Serial.print("Setting Brake Min Dist: ");
-    brakeMinDist = brakeDist;
-    Serial.println(brakeMinDist);
-  }
-
+      //Set Max distance
+      Serial.print("Setting Brake Max Dist: ");
+      brakeMaxDist = brakeDist;
+      Serial.println(brakeMaxDist);
+      needToWriteSettings = true;
+    }
+  
+    if(brakeMinDist == -1 || digitalRead(BRAKE_MIN_PIN) == HIGH) {
+      //Set Min Distance
+      Serial.print("Setting Brake Min Dist: ");
+      brakeMinDist = brakeDist;
+      Serial.println(brakeMinDist);
+      needToWriteSettings = true;
+    }
+  
   } else {
-    //out of range
+      //out of range
+  }
+  
+  if(needToWriteSettings == true && SAVE_TO_FLASH) {
+    Settings settings;
+    Serial.println("Saving Settings To Flash Memory");
+    settings.throtMin = throttleMinDist;
+    settings.throtMax = throttleMaxDist;
+    settings.brakeMin = brakeMinDist;
+    settings.brakeMax = brakeMaxDist;
+    settings.valid = true;
+    //TODO: Implement Safety for number of writes in a given amount of time
+    settings_flash_store.write(settings);
   }
 
   //BRIGHTNESS
   int maxBrightness = analogRead(BRIGHTNESS_POT_PIN);
-  // Serial.print(maxBrightness);
-  // Serial.print(" / ");
   maxBrightness = map(maxBrightness, 0, 1024, 0, 255);
-  // Serial.print(maxBrightness);
-  // Serial.println("");
+
   //PIXELS
   updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, maxBrightness);
   neo_pixels.show();
