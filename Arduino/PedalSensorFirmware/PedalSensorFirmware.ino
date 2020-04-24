@@ -31,6 +31,7 @@
 
 //OTHER
 #define SAVE_TO_FLASH true
+#define WAIT_FOR_SERIAL_DELAY_MS 5000
 
 //GLOBALS
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
@@ -58,11 +59,13 @@ void setup() {
   Serial.begin(115200);
   
   // wait until serial port opens for native USB devices
-  /*
-  while (!Serial) {
+  int delayStartTime = millis();
+  while (!Serial && (millis() - delayStartTime <= WAIT_FOR_SERIAL_DELAY_MS)) {
     delay(1);
+    Serial.println("waiting on serial comm...");
   }
-  */
+
+  Serial.println("Staring Up...");
 
   /////// Setup Switches/POTS ///////
   pinMode(THROT_MIN_PIN, INPUT);
@@ -96,7 +99,7 @@ void setup() {
   if(!brakeLox.begin(BRAKE_LOX_ADDRESS)) {
     Serial.println("------Failed to boot Brake Sensor");
     //TODO: Some failure indicator to the user
-    while(1);
+   // while(1);
   }
 
   Serial.println("Turning On Throttle Sensor");
@@ -107,7 +110,7 @@ void setup() {
   if(!throttleLox.begin(THROTTLE_LOX_ADDRESS)) {
     Serial.println("--------Failed to boot Throttle Sensor");
     //TODO: Some failure indicator to the user
-    while(1);
+    //while(1);
   }
 
   //////// GET FLASH MEM VALUES ///////////
