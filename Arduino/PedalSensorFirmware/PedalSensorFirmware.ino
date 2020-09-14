@@ -35,6 +35,7 @@
 #define WAIT_FOR_SERIAL_DELAY_MS 5000
 #define SKIP_LOX false
 #define DEBUG_LOX false
+#define MAIN_LOOP_DELAY_MS 10
 
 //GLOBALS
 Adafruit_VL53L0X throttleLox = Adafruit_VL53L0X();
@@ -68,7 +69,7 @@ FlashStorage(settings_flash_store, Settings);
 void setup() {
     
   /////// setup serial console ///////
-  Serial.begin(115200);
+  Serial.begin(9600);
   
   // wait until serial port opens for native USB devices
   int delayStartTime = millis();
@@ -223,7 +224,7 @@ void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int br
 }
 
 void loop() {
-
+  //Serial.println("Loop Start");
   //RANGE SENSOR DATA
   VL53L0X_RangingMeasurementData_t throttleMeasure;
   VL53L0X_RangingMeasurementData_t brakeMeasure;  
@@ -231,8 +232,10 @@ void loop() {
   //THROTTLE
   if(!SKIP_LOX)
   {
+    if(DEBUG_LOX) {
+      Serial.println("THROTTLE LOX DEBUG");
+    }
     throttleLox.rangingTest(&throttleMeasure, DEBUG_LOX); // pass in 'true' to get debug data printout!
-    
     if(throttleMeasure.RangeStatus != 4) {
       throttleDist = throttleMeasure.RangeMilliMeter;
       if(throttleMaxDist == -1 || digitalRead(THROT_MAX_PIN)== HIGH){
@@ -260,6 +263,9 @@ void loop() {
   //BRAKE
   if(!SKIP_LOX)
   {
+    if(DEBUG_LOX) {
+      Serial.println("BRAKE LOX DEBUG");
+    }
     brakeLox.rangingTest(&brakeMeasure, DEBUG_LOX); // pass in 'true' to get debug data printout!
     if(brakeMeasure.RangeStatus != 4) {
       brakeDist = brakeMeasure.RangeMilliMeter;
@@ -307,7 +313,13 @@ void loop() {
   maxBrightness = 255 - map(maxBrightness, 0, 1024, 0, 255);  
   
   //PIXELS
+//  Serial.print("ThrottleDist: ");
+//  Serial.println(throttleDist);
+//  Serial.print("BrakeDist: ");
+//  Serial.println(brakeDist);
+  
   updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, maxBrightness);
   neo_pixels.show();
-  delay(16);
+  delay(MAIN_LOOP_DELAY_MS);
+  //Serial.println("Loop End");
 }
