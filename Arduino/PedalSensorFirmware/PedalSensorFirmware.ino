@@ -32,7 +32,7 @@
 //OTHER
 #define SAVE_TO_FLASH true
 #define FLASH_UPDATE_DELAY 1000
-#define WAIT_FOR_SERIAL_DELAY_MS 5000
+#define WAIT_FOR_SERIAL_DELAY_MS 1000
 #define SKIP_LOX false
 #define DEBUG_LOX false
 #define MAIN_LOOP_DELAY_MS 10
@@ -55,6 +55,9 @@ int brakeDist = -1;
 //Flash tracking
 uint lastFlashWrite = 0;
 boolean needToWriteSettings = false;
+
+//Other
+boolean justPoweredOn = true;
 
 typedef struct {
   boolean valid;
@@ -169,6 +172,31 @@ void clearPixels(int startPixel, int endPixel) {
   for(int i = startPixel; i < endPixel; i++){
     neo_pixels.setPixelColor(i, 0, 0, 0);
   }
+}
+
+void runPowerOnAnimation() {
+  clearPixels(0, PIXEL_COUNT);
+  neo_pixels.show();
+ 
+  int brakeLightDirection = (BRAKE_PIXEL_START <= BRAKE_PIXEL_END) ? 1:-1;
+  for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END, lightCount < NUM_BRAKE_PIXELS; i += brakeLightDirection, lightCount++) {
+      //Light up full lights
+      neo_pixels.setPixelColor(i, 5, 0, 0);
+  }
+  neo_pixels.show();
+  delay(500);
+  
+  int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
+  for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END, lightCount < NUM_THROTTLE_PIXELS; i += throttleLightDirection, lightCount++) {
+      //Light up full lights
+      neo_pixels.setPixelColor(i, 0, 5, 0);
+  }
+
+  neo_pixels.show();
+  delay(1000);
+  
+  clearPixels(0, PIXEL_COUNT);
+  neo_pixels.show();
 }
 
 void updatePixels(int throtVal, int brakeVal, int throtMin, int throtMax, int brakeMin, int brakeMax, int maxBrightness) {
@@ -309,14 +337,21 @@ void loop() {
   }
 
   //BRIGHTNESS
-  int maxBrightness = analogRead(BRIGHTNESS_POT_PIN);
+  int maxBrightness = analogRead(BRIGHTNESS_POT_PIN); 
   maxBrightness = 255 - map(maxBrightness, 0, 1024, 0, 255);  
-  
-  //PIXELS
+
+  //DEBUGGING
 //  Serial.print("ThrottleDist: ");
 //  Serial.println(throttleDist);
 //  Serial.print("BrakeDist: ");
 //  Serial.println(brakeDist);
+  
+  //PIXELS
+
+  if(justPoweredOn) {
+    justPoweredOn = false;
+    runPowerOnAnimation();
+  }
   
   updatePixels(throttleDist, brakeDist, throttleMinDist, throttleMaxDist, brakeMinDist, brakeMaxDist, maxBrightness);
   neo_pixels.show();
