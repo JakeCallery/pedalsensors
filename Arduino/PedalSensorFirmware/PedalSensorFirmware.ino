@@ -182,14 +182,18 @@ void runPowerOnAnimation() {
   for(int i = BRAKE_PIXEL_START, lightCount = 0; i != BRAKE_PIXEL_END, lightCount < NUM_BRAKE_PIXELS; i += brakeLightDirection, lightCount++) {
       //Light up full lights
       neo_pixels.setPixelColor(i, 5, 0, 0);
+      neo_pixels.show();
+      delay(50);
   }
-  neo_pixels.show();
-  delay(500);
-  
+//  neo_pixels.show();
+//  delay(500);
+//  
   int throttleLightDirection = (THROTTLE_PIXEL_START <= THROTTLE_PIXEL_END) ? 1:-1;
   for(int i = THROTTLE_PIXEL_START, lightCount = 0; i != THROTTLE_PIXEL_END, lightCount < NUM_THROTTLE_PIXELS; i += throttleLightDirection, lightCount++) {
       //Light up full lights
       neo_pixels.setPixelColor(i, 0, 5, 0);
+      neo_pixels.show();
+      delay(50);
   }
 
   neo_pixels.show();
@@ -284,6 +288,7 @@ void loop() {
    
     } else {
       //out of range
+      throttleDist = -1;
     }
   }
   
@@ -315,6 +320,7 @@ void loop() {
     
     } else {
         //out of range
+        brakeDist = -1;
     }    
   }
 
