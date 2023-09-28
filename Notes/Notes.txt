@@ -1,0 +1,7 @@
+Save Data to Arduino Eeprom
+https://www.makeuseof.com/tag/use-arduino-eeprom-save-data-power-cycles/
+
+Maybe use this for the feather:
+https://forums.adafruit.com/viewtopic.php?f=22&t=88272
+https://github.com/cmaglie/FlashStorage
+
